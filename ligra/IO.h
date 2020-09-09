@@ -192,6 +192,9 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric, bool mmap) {
   long len = W.m -1;
   long n = atol(W.Strings[1]);
   long m = atol(W.Strings[2]);
+  cout << "in IO.h len= " << len << endl;
+  cout << "n = " << n << endl;
+  cout << "m = " << m << endl;
 #ifndef WEIGHTED
   if (len != n + m + 2) {
 #else

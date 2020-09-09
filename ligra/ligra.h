@@ -40,6 +40,8 @@
 #include "parseCommandLine.h"
 #include "index_map.h"
 #include "edgeMap_utils.h"
+#include "graphblas/io/data_loader.h"
+using namespace graphblas::io;
 using namespace std;
 
 //*****START FRAMEWORK*****
@@ -470,14 +472,81 @@ template<class vertex>
 void Compute(hypergraph<vertex>&, commandLine);
 
 int parallel_main(int argc, char* argv[]) {
-  commandLine P(argc,argv," [-s] <inFile>");
+  commandLine P(argc,argv," [-s] [-G] <inFile>");
   char* iFile = P.getArgument(0);
+  bool weighted=P.getOptionValue("-G");
+  cout << "weighted = " << weighted << endl;
+
+
+  CSRMatrix<float> csr_matrix_float = load_csr_matrix_from_float_npz("/work/shared/common/research/graphblas/data/sparse_matrix_graph/reddit_233K_115M_csr_float32.npz");
+  // int nrows = csr_matrix_float.num_rows;
+  // int ncols = csr_matrix_float.num_cols;
+  // cout<<nrows<<" * "<<ncols<<endl;
+  // std::vector<float> vals = csr_matrix_float.adj_data;
+  // int nvals = vals.size();
+  // cout<<"nvals:"<<nvals<<endl;
+  // cout<<"vals: "<<endl;
+  // for (int i=0;i<nvals;i++){
+  //   cout<<vals[i]<<" ";
+  // }
+  // cout<<endl<<"----------------------"<<endl;
+  // std::vector<int> col_indices;
+  // std::copy(csr_matrix_float.adj_indices.begin(), csr_matrix_float.adj_indices.end(),
+  //           std::back_inserter(col_indices));
+  // cout<<"col_indices： "<<endl;
+  // for (int i=0;i<col_indices.size();i++){
+  //   cout<<col_indices[i]<<" ";
+  // }
+  // cout<<endl<<"--------------------"<<endl;
+  // cout<<"row_indices: "<<endl;
+  // std::vector<int> row_indices(nvals);
+  // for (int row_idx = 0; row_idx < nrows; row_idx++) {
+  //   int start = csr_matrix_float.adj_indptr[row_idx];
+  //   int end = csr_matrix_float.adj_indptr[row_idx+1];
+  //   for (int i = start; i < end; i++) {
+  //     row_indices[i] = row_idx;
+  //     cout<<row_idx<<" ";
+  //   }
+  // }
+    ofstream file (iFile, ios::trunc); //trunc remove content
+    if (!file.is_open()) {
+      std::cout << "Unable to open file: " << iFile << std::endl;
+      abort();
+    }
+    if (weighted){
+      file <<"WeightedAdjacencyGraph"<<endl;
+    }
+    else{
+      file <<"AdjacencyGraph"<<endl;
+    }
+    int n=csr_matrix_float.adj_indptr.size();
+    int m=csr_matrix_float.adj_indices.size();
+    file<<n<<endl<<m<<endl;
+    for (int i=0; i<n; i++){
+      file<<csr_matrix_float.adj_indptr[i]<<endl;
+    }
+    for (int i=0; i<m; i++){
+      file<<csr_matrix_float.adj_indices[i]<<endl;
+    }
+    if (weighted){
+    for (int i=0; i<csr_matrix_float.adj_data.size(); i++){
+      file<<csr_matrix_float.adj_data[i]<<endl;
+    }
+    }
+    file.close();
+
+
   bool symmetric = P.getOptionValue("-s");
   bool compressed = P.getOptionValue("-c");
   bool binary = P.getOptionValue("-b");
   bool mmap = P.getOptionValue("-m");
-  //cout << "mmap = " << mmap << endl;
+  cout << "iFile = " << *iFile << endl;
+  cout << "symmetric = " << symmetric << endl;
+  cout << "compressed = " << compressed << endl;
+  cout << "binary = " << binary << endl;
+  cout << "mmap = " << mmap << endl;
   long rounds = P.getOptionLongValue("-rounds",3);
+
   if (compressed) {
     if (symmetric) {
 #ifndef HYPER
